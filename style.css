@@ -1,0 +1,127 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* CRT 屏幕效果 */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.terminal-container {
+    height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-bottom: 1px solid #00ff00;
+}
+
+.header h1 {
+    font-size: 1.5em;
+    text-shadow: 0 0 10px #00ff00;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 5px #00ff00; }
+    to { text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; }
+}
+
+.output-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background: rgba(0, 255, 0, 0.05);
+    box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+}
+
+.output-line {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.prompt {
+    color: #00ff00;
+    margin-right: 8px;
+}
+
+.input-line {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    background: rgba(0, 255, 0, 0.05);
+}
+
+.prompt-symbol {
+    color: #00ff00;
+    margin-right: 8px;
+}
+
+#command-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+}
+
+/* 滚动条样式 */
+.output-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-container::-webkit-scrollbar-track {
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.output-container::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border-radius: 4px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .terminal-container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.2em;
+    }
+}
