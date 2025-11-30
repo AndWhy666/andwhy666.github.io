@@ -3,30 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Terminal</title>
+    <title>GitHub Terminal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 添加老旧电视滤镜层 -->
+    <div class="crt-filter">
+        <div class="scanline"></div>
+        <div class="flicker"></div>
+        <div class="noise"></div>
+    </div>
+    
+    <!-- 添加GitHub配置面板 -->
+    <div class="github-config" id="githubConfig">
+        <div class="config-panel">
+            <h3>GitHub 仓库配置</h3>
+            <div class="input-group">
+                <label for="repoInput">仓库 (格式: 用户名/仓库名):</label>
+                <input type="text" id="repoInput" placeholder="username/repository">
+            </div>
+            <div class="input-group">
+                <label for="branchInput">分支:</label>
+                <input type="text" id="branchInput" placeholder="main" value="main">
+            </div>
+            <div class="input-group">
+                <label for="tokenInput">GitHub Token:</label>
+                <input type="password" id="tokenInput" placeholder="ghp_...">
+            </div>
+            <div class="button-group">
+                <button id="loadRepoBtn">加载仓库</button>
+                <button id="closeConfigBtn">关闭</button>
+            </div>
+            <div class="help-text">
+                <p>需要GitHub Token才能访问私有仓库或提高API限制。</p>
+                <p>在 <a href="https://github.com/settings/tokens" target="_blank">GitHub设置</a> 中创建token。</p>
+            </div>
+        </div>
+    </div>
+    
     <div class="terminal-container">
         <div class="header">
-            <h1>⚡ CYBER TERMINAL v2.1.4 ⚡</h1>
-            <div>输入 'help' 查看可用命令</div>
+            <h1>⚡ GITHUB TERMINAL v2.1.4 ⚡</h1>
+            <div>输入 'help' 查看可用命令 | <a href="#" id="configLink">配置GitHub仓库</a></div>
         </div>
         
         <div class="output-container" id="output">
             <div class="output-line">
-                <span class="prompt">system@cyber-term:~$</span> 终端系统初始化完成
+                <span class="prompt">system@github-term:~$</span> 终端系统初始化完成
             </div>
             <div class="output-line">
-                <span class="prompt">system@cyber-term:~$</span> 欢迎访问 Cyber Terminal
+                <span class="prompt">system@github-term:~$</span> 欢迎访问 GitHub Terminal
             </div>
             <div class="output-line">
-                <span class="prompt">system@cyber-term:~$</span> 输入 'help' 获取命令列表
+                <span class="prompt">system@github-term:~$</span> 输入 'help' 获取命令列表
+            </div>
+            <div class="output-line">
+                <span class="prompt">system@github-term:~$</span> 请先配置GitHub仓库以加载文件系统
             </div>
         </div>
         
         <div class="input-line">
-            <span class="prompt-symbol">user@cyber-term:~$</span>
+            <span class="prompt-symbol" id="current-path">user@github-term:~$</span>
             <input type="text" id="command-input" autofocus autocomplete="off">
         </div>
     </div>
