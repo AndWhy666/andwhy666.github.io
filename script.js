@@ -302,8 +302,6 @@ class CyberTerminal {
         const helpText = [
             '可用命令:',
             '  clear          - 清空终端',
-            '  time           - 显示当前时间',
-            '  date           - 显示当前日期',
             '  echo [文本]    - 回显文本',
             '  ls, list       - 列出当前目录内容',
             '  cd [目录]      - 切换目录',
