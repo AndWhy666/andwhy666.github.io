@@ -218,7 +218,8 @@ class CyberTerminal {
         this.commandHistory.push(command);
         this.historyIndex = this.commandHistory.length;
         
-        const [cmd, ...args] = command.split(' ');
+        // 改进的命令解析，支持带引号的参数
+        const [cmd, ...args] = this.parseCommand(command);
         const handler = this.commands[cmd.toLowerCase()];
         
         if (handler) {
@@ -229,6 +230,44 @@ class CyberTerminal {
         
         this.inputElement.value = '';
         this.scrollToBottom();
+    }
+
+    // 新增方法：解析命令行参数，支持带引号的字符串
+    parseCommand(command) {
+        const args = [];
+        let currentArg = '';
+        let inQuotes = false;
+        let quoteChar = '';
+        
+        for (let i = 0; i < command.length; i++) {
+            const char = command[i];
+            
+            if ((char === '"' || char === "'") && !inQuotes) {
+                // 开始引号
+                inQuotes = true;
+                quoteChar = char;
+            } else if (char === quoteChar && inQuotes) {
+                // 结束引号
+                inQuotes = false;
+                quoteChar = '';
+            } else if (char === ' ' && !inQuotes) {
+                // 空格分隔符（不在引号内）
+                if (currentArg) {
+                    args.push(currentArg);
+                    currentArg = '';
+                }
+            } else {
+                // 普通字符
+                currentArg += char;
+            }
+        }
+        
+        // 添加最后一个参数
+        if (currentArg) {
+            args.push(currentArg);
+        }
+        
+        return args;
     }
     
     navigateHistory(direction) {
@@ -350,11 +389,28 @@ class CyberTerminal {
             
             if (item.type === 'directory') {
                 fileItem.innerHTML = `<span class="directory">${item.name}/</span>`;
+                
+                // 为目录添加点击事件（切换到目录）
+                fileItem.addEventListener('click', () => {
+                    this.inputElement.value = `cd "${item.name}"`;
+                    this.inputElement.focus();
+                });
+                fileItem.style.cursor = 'pointer';
             } else {
-                fileItem.innerHTML = `<span class="file">${item.name}</span>`;
+                const displayName = item.name;
+                fileItem.innerHTML = `<span class="file">${displayName}</span>`;
                 if (item.size) {
                     fileItem.innerHTML += ` <span style="color: #888;">(${item.size})</span>`;
                 }
+                
+                // 为文件添加点击事件（填充下载命令）
+                fileItem.addEventListener('click', () => {
+                    // 如果文件名包含空格，使用引号
+                    const command = item.name.includes(' ') ? 
+                        `scp "${item.name}"` : `scp ${item.name}`;
+                    this.inputElement.value = command;
+                    this.inputElement.focus();
+                });
             }
             
             fileList.appendChild(fileItem);
