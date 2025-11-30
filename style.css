@@ -217,7 +217,9 @@ body::after {
 .output-container::-webkit-scrollbar-thumb {
     background: #00ff00;
     border-radius: 4px;
-}/* GitHub 配置面板样式 */
+}
+
+/* GitHub 配置面板样式 */
 .github-config {
     position: fixed;
     top: 0;

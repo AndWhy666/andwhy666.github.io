@@ -373,7 +373,6 @@ class CyberTerminal {
             '可用命令:',
             '  help           - 显示此帮助信息',
             '  hello          - 打招呼',
-            '  download       - 下载a.bin文件',
             '  clear          - 清空终端',
             '  time           - 显示当前时间',
             '  date           - 显示当前日期',
