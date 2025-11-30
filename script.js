@@ -286,7 +286,7 @@ class CyberTerminal {
     
     getPrompt() {
         const path = this.currentPath.map(node => node.name).join('/');
-        return `user@github-term:${path}$`;
+        return `user@terminal:${path}$`;
     }
     
     updatePrompt() {
