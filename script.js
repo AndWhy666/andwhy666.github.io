@@ -45,6 +45,7 @@ class CyberTerminal {
         
         this.init();
         this.initGitHubConfig();
+        this.loadGitHubRepo();
     }
     
     init() {
