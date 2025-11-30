@@ -26,25 +26,16 @@ class CyberTerminal {
         // 扩展命令列表
         this.commands = {
             'help': this.showHelp.bind(this),
-            'hello': this.sayHello.bind(this),
-            'download': this.downloadFile.bind(this),
             'clear': this.clearTerminal.bind(this),
-            'time': this.showTime.bind(this),
-            'date': this.showDate.bind(this),
             'echo': this.echoText.bind(this),
-            'about': this.showAbout.bind(this),
-            'system': this.showSystemInfo.bind(this),
             'ls': this.listFiles.bind(this),
             'list': this.listFiles.bind(this),
             'cd': this.changeDirectory.bind(this),
             'scp': this.downloadSpecificFile.bind(this),
-            'pwd': this.showCurrentDirectory.bind(this),
-            'github': this.showGitHubStatus.bind(this),
-            'loadrepo': this.loadGitHubRepo.bind(this)
+            'pwd': this.showCurrentDirectory.bind(this)
         };
         
         this.init();
-        this.initGitHubConfig();
         this.loadGitHubRepo();
     }
     
@@ -59,99 +50,15 @@ class CyberTerminal {
         });
     }
     
-    initGitHubConfig() {
-        // 绑定配置面板事件
-        const configLink = document.getElementById('configLink');
-        const githubConfig = document.getElementById('githubConfig');
-        const loadRepoBtn = document.getElementById('loadRepoBtn');
-        const closeConfigBtn = document.getElementById('closeConfigBtn');
-        
-        configLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            githubConfig.style.display = 'flex';
-        });
-        
-        closeConfigBtn.addEventListener('click', () => {
-            githubConfig.style.display = 'none';
-        });
-        
-        loadRepoBtn.addEventListener('click', () => {
-            this.loadRepoFromUI();
-        });
-        
-        // 尝试从本地存储加载配置
-        this.loadConfigFromStorage();
-    }
-    
-    loadConfigFromStorage() {/*
-        const savedConfig = localStorage.getItem('githubConfig');
-        if (savedConfig) {
-            this.githubConfig = JSON.parse(savedConfig);
-            document.getElementById('repoInput').value = this.githubConfig.repo;
-            document.getElementById('branchInput').value = this.githubConfig.branch;
-            document.getElementById('tokenInput').value = this.githubConfig.token;
-        }*/
-    }
-    
-    saveConfigToStorage() {/*
-        localStorage.setItem('githubConfig', JSON.stringify(this.githubConfig));*/
-    }
-    
-    async loadRepoFromUI() {
-        const repoInput = document.getElementById('repoInput').value.trim();
-        const branchInput = document.getElementById('branchInput').value.trim();
-        const tokenInput = document.getElementById('tokenInput').value.trim();
-        
-        if (!repoInput) {
-            alert('请输入仓库名称（格式：用户名/仓库名）');
-            return;
-        }
-        
-        this.githubConfig = {
-            repo: repoInput,
-            branch: branchInput || 'main',
-            token: tokenInput
-        };
-        
-        this.saveConfigToStorage();
-        
-        document.getElementById('githubConfig').style.display = 'none';
-        this.addToOutput('正在从GitHub加载仓库...', 'info');
-        
-        await this.loadGitHubRepo();
-    }
-    
-    async loadGitHubRepo(args = []) {
-        if (args.length > 0) {
-            // 从命令参数获取仓库信息
-            const repo = args[0];
-            const branch = args[1] || 'main';
-            const token = args[2] || this.githubConfig.token;
-            
-            this.githubConfig = {
-                repo,
-                branch,
-                token
-            };
-        }
-        
-        if (!this.githubConfig.repo) {
-            this.addToOutput('错误: 未配置GitHub仓库。使用 "loadrepo 用户名/仓库名 分支 token" 或点击上方链接配置。', 'error');
-            return;
-        }
-        
+    async loadGitHubRepo() {
+
         try {
-            this.addToOutput(`正在从GitHub加载: ${this.githubConfig.repo} (${this.githubConfig.branch})`, 'info');
-            
             const fileSystem = await this.fetchGitHubRepoStructure();
             this.fileSystem = fileSystem;
             
             // 重置当前路径到根目录
             this.currentPath = [this.fileSystem];
             this.updatePrompt();
-            
-            this.addToOutput('仓库加载成功!', 'success');
-            this.addToOutput('使用 "ls" 查看文件列表', 'info');
         } catch (error) {
             this.addToOutput(`错误: ${error.message}`, 'error');
             if (error.message.includes('401') || error.message.includes('403')) {
@@ -162,7 +69,9 @@ class CyberTerminal {
     
     async fetchGitHubRepoStructure() {
         const { repo, branch, token } = this.githubConfig;
-        const apiUrl = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
+        
+        // 首先获取根目录的内容，找到main文件夹
+        const rootUrl = `https://api.github.com/repos/${repo}/git/trees/${branch}`;
         
         const headers = {
             'Accept': 'application/vnd.github.v3+json',
@@ -173,16 +82,36 @@ class CyberTerminal {
             headers['Authorization'] = `token ${token}`;
         }
         
-        const response = await fetch(apiUrl, { headers });
+        // 获取根目录
+        const rootResponse = await fetch(rootUrl, { headers });
         
-        if (!response.ok) {
-            throw new Error(`GitHub API 错误: ${response.status} ${response.statusText}`);
+        if (!rootResponse.ok) {
+            throw new Error(`GitHub API 错误: ${rootResponse.status} ${rootResponse.statusText}`);
         }
         
-        const data = await response.json();
+        const rootData = await rootResponse.json();
+        
+        // 查找main文件夹
+        const mainFolder = rootData.tree.find(item => 
+            item.type === 'tree' && item.path.toLowerCase() === 'main'
+        );
+        
+        if (!mainFolder) {
+            throw new Error('在仓库中未找到 main 文件夹');
+        }
+        
+        // 获取main文件夹的递归内容
+        const mainUrl = `https://api.github.com/repos/${repo}/git/trees/${mainFolder.sha}?recursive=1`;
+        const mainResponse = await fetch(mainUrl, { headers });
+        
+        if (!mainResponse.ok) {
+            throw new Error(`GitHub API 错误: ${mainResponse.status} ${mainResponse.statusText}`);
+        }
+        
+        const mainData = await mainResponse.json();
         
         // 将GitHub API响应转换为我们的文件系统结构
-        return this.convertGitHubTreeToFileSystem(data.tree);
+        return this.convertGitHubTreeToFileSystem(mainData.tree);
     }
     
     convertGitHubTreeToFileSystem(tree) {
@@ -209,7 +138,7 @@ class CyberTerminal {
                 this.addFileToStructure(root, pathParts, item);
             }
         });
-        
+
         return root;
     }
     
@@ -372,56 +301,22 @@ class CyberTerminal {
     showHelp() {
         const helpText = [
             '可用命令:',
-            '  help           - 显示此帮助信息',
-            '  hello          - 打招呼',
             '  clear          - 清空终端',
             '  time           - 显示当前时间',
             '  date           - 显示当前日期',
             '  echo [文本]    - 回显文本',
-            '  about          - 关于此终端',
-            '  system         - 系统信息',
             '  ls, list       - 列出当前目录内容',
             '  cd [目录]      - 切换目录',
             '  scp [文件名]   - 下载指定文件',
-            '  pwd            - 显示当前目录路径',
-            '  github         - 显示GitHub仓库状态',
-            '  loadrepo       - 加载GitHub仓库'
+            '  pwd            - 显示当前目录路径'
         ];
         
         helpText.forEach(line => this.addToOutput(line));
     }
     
-    sayHello() {
-        this.addToOutput('Hello World! 👋', 'success');
-        this.addToOutput('欢迎来到 GitHub Terminal！这是一个基于GitHub仓库的终端模拟器。', 'info');
-    }
-    
-    downloadFile() {
-        // 直接下载同目录下的a.bin文件
-        const a = document.createElement('a');
-        a.href = 'a.bin';
-        a.download = 'a.bin';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        this.addToOutput('开始下载a.bin文件...', 'success');
-        this.addToOutput('如果下载没有开始，请检查a.bin文件是否存在', 'info');
-    }
-    
     clearTerminal() {
         this.outputElement.innerHTML = '';
         this.addToOutput('终端已清空', 'info');
-    }
-    
-    showTime() {
-        const now = new Date();
-        this.addToOutput(`当前时间: ${now.toLocaleTimeString()}`, 'info');
-    }
-    
-    showDate() {
-        const now = new Date();
-        this.addToOutput(`当前日期: ${now.toLocaleDateString()}`, 'info');
     }
     
     echoText(args) {
@@ -430,41 +325,6 @@ class CyberTerminal {
         } else {
             this.addToOutput('用法: echo [文本]', 'error');
         }
-    }
-    
-    showAbout() {
-        const aboutText = [
-            'GitHub Terminal v2.1.4',
-            '一个基于 Web 的终端模拟器',
-            '特点:',
-            '  • 科技风黑底绿字界面',
-            '  • 支持多种交互命令',
-            '  • 从GitHub仓库加载真实文件结构',
-            '  • 文件下载功能',
-            '  • 命令历史记录',
-            '  • 响应式设计',
-            '  • 模拟文件系统导航',
-            '',
-            '使用 ↑↓ 箭头键浏览命令历史',
-            '使用 Tab 键自动补全命令'
-        ];
-        
-        aboutText.forEach(line => this.addToOutput(line));
-    }
-    
-    showSystemInfo() {
-        const info = [
-            '系统信息:',
-            `用户代理: ${navigator.userAgent}`,
-            `语言: ${navigator.language}`,
-            `平台: ${navigator.platform}`,
-            `在线状态: ${navigator.onLine ? '在线' : '离线'}`,
-            `Cookie 启用: ${navigator.cookieEnabled ? '是' : '否'}`,
-            `屏幕分辨率: ${screen.width}x${screen.height}`,
-            `颜色深度: ${screen.colorDepth} 位`
-        ];
-        
-        info.forEach(line => this.addToOutput(line));
     }
     
     listFiles() {
@@ -597,18 +457,6 @@ class CyberTerminal {
     showCurrentDirectory() {
         const path = this.currentPath.map(node => node.name).join('/');
         this.addToOutput(path);
-    }
-    
-    showGitHubStatus() {
-        if (!this.githubConfig.repo) {
-            this.addToOutput('未配置GitHub仓库', 'info');
-            this.addToOutput('使用 "loadrepo 用户名/仓库名 分支 token" 或点击上方链接配置', 'info');
-            return;
-        }
-        
-        this.addToOutput(`GitHub仓库: ${this.githubConfig.repo}`, 'info');
-        this.addToOutput(`分支: ${this.githubConfig.branch}`, 'info');
-        this.addToOutput(`Token: ${this.githubConfig.token ? '已设置' : '未设置'}`, 'info');
     }
 }
 
