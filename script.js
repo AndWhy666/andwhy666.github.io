@@ -8,7 +8,7 @@ class CyberTerminal {
         
         // GitHub配置
         this.githubConfig = {
-            repo: '',
+            repo: 'AndWhy666/AndWhy666.github.io',
             branch: 'main',
             token: ''
         };
