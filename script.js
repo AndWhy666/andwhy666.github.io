@@ -82,18 +82,18 @@ class CyberTerminal {
         this.loadConfigFromStorage();
     }
     
-    loadConfigFromStorage() {
+    loadConfigFromStorage() {/*
         const savedConfig = localStorage.getItem('githubConfig');
         if (savedConfig) {
             this.githubConfig = JSON.parse(savedConfig);
             document.getElementById('repoInput').value = this.githubConfig.repo;
             document.getElementById('branchInput').value = this.githubConfig.branch;
             document.getElementById('tokenInput').value = this.githubConfig.token;
-        }
+        }*/
     }
     
-    saveConfigToStorage() {
-        localStorage.setItem('githubConfig', JSON.stringify(this.githubConfig));
+    saveConfigToStorage() {/*
+        localStorage.setItem('githubConfig', JSON.stringify(this.githubConfig));*/
     }
     
     async loadRepoFromUI() {
